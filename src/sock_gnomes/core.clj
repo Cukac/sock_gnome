@@ -40,3 +40,24 @@
   (filter #(= (:variety %) (:variety target-sock)) sock-set))
 
 (similar-socks (first (:socks @sock-gnome)) (:socks @dryer))
+
+(def counter (ref 0))
+(future (dosync
+          (alter counter inc)
+          (println @counter)
+          (Thread/sleep 500)
+          (alter counter inc)
+          (println @counter)))
+(Thread/sleep 250)
+(println @counter)
+
+(defn sleep-print-update
+  [sleep-time thread-name update-fn]
+  (fn [state]
+    (Thread/sleep sleep-time)
+    (println (str thread-name ": " state))
+    (update-fn state)))
+(def counter (ref 0))
+
+(future (dosync (commute counter (sleep-print-update 100 "Thread A" inc))))
+(future (dosync (commute counter (sleep-print-update 150 "Thread B" inc))))
